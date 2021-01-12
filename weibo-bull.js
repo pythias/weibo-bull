@@ -1,7 +1,7 @@
 // 1. 使用 chrome 打开 https://huodong.weibo.cn/hongbao2021 （确保你登录了微博）
 // 2. 打开调试窗口，在 console 中贴下面的代码后回车
 
-let weibo_bull = function() {
+function weibo_bull() {
     let tickling = {
         type: 0,
         page: 1,
@@ -89,21 +89,20 @@ let weibo_bull = function() {
                 }
             });
         },
-        start: function () {
-            if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1) {
-                if (confirm("请访问福牛首页后再次粘贴脚本")) {
-                    window.location = "https://huodong.weibo.cn/hongbao2021";
-                }
-            } else {
-                console.log("开始摸一摸...");
-                tickling.get_ranks();
-            }
-        },
         stop: function () {
             tickling.stopped = true;
             tickling.clearTimeout(tickling.timer);
         }
     };
+}
 
-    tickling.start();
+weibo_bull.prototype.start = function() {
+    if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1) {
+        if (confirm("请访问福牛首页后再次粘贴脚本")) {
+            window.location = "https://huodong.weibo.cn/hongbao2021";
+        }
+    } else {
+        console.log("开始摸一摸...");
+        this.get_ranks();
+    }
 };

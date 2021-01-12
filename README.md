@@ -12,6 +12,7 @@ fetch("https://raw.githubusercontent.com/pythias/weibo-bull/master/weibo-bull.js
     .then(response => response.text())
     .then(text => {
         eval(text);
-        weibo_bull();
+        let bull = weibo_bull();
+        bull.start();
     });
 ```
