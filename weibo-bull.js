@@ -92,17 +92,18 @@ function weibo_bull() {
         stop: function () {
             tickling.stopped = true;
             tickling.clearTimeout(tickling.timer);
+        },
+        start: function() {
+            if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1) {
+                if (confirm("请访问福牛首页后再次粘贴脚本")) {
+                    window.location = "https://huodong.weibo.cn/hongbao2021";
+                }
+            } else {
+                console.log("开始摸一摸...");
+                tickling.get_ranks();
+            }
         }
     };
-}
 
-weibo_bull.prototype.start = function() {
-    if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1) {
-        if (confirm("请访问福牛首页后再次粘贴脚本")) {
-            window.location = "https://huodong.weibo.cn/hongbao2021";
-        }
-    } else {
-        console.log("开始摸一摸...");
-        this.get_ranks();
-    }
-};
+    tickling.start();
+}
