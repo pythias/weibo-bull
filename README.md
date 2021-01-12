@@ -12,7 +12,6 @@ fetch("https://raw.githubusercontent.com/pythias/weibo-bull/master/weibo-bull.js
     .then(response => response.text())
     .then(text => {
         eval(text);
-        const cleaner = new cleanup();
-        cleaner.start();
+        weibo_bull();
     });
 ```
