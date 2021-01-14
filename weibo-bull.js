@@ -138,7 +138,7 @@ function get_touch(rank, data) {
             }
         } else {
             console.log("白摸 %s 了", username);
-        } c 
+        }
     });
 }
 
