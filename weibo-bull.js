@@ -81,7 +81,7 @@ function get_ranks(type, page) {
             homes_to_visit.push(user_from_rank(rank));
         });
 
-        return data.hasnext && page < 20;
+        return data.hasnext && page < 5;
     });
 }
 
@@ -95,7 +95,7 @@ function get_plaza(page) {
             }
         });
 
-        return data.hasnext && page < 20;
+        return data.hasnext && page < 5;
     });
 }
 
@@ -206,10 +206,10 @@ function go_travel(scene) {
     post_sync(url, '', (data) => {
         scene_name = data.name;
         if (data.props === undefined) {
-            console.log('在 %s 没寻到宝', scene_name, scene);
+            console.log('在 %s 没寻到宝', scene_name);
         } else {
-            post(data.props.btn.link).then(data => {
-                console.log('在 %s 寻到 %s', scene_name, scene, data.name);
+            post('https://huodong.weibo.cn' + data.props.btn.link).then(data => {
+                console.log('在 %s 寻到 %s', scene_name, data.name);
             });
         }
 
@@ -279,7 +279,7 @@ if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1)
     go_sign();
 
     get_props(1);
-    console.table(my_props);
+    console.log("已有道具 %d 个", Object.keys(my_props).length);
 
     start().then((homes) => {
         homes.sort(() => Math.random() - 0.5);
