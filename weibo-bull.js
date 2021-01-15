@@ -1,7 +1,7 @@
 // 1. 使用 chrome 打开 https://huodong.weibo.cn/hongbao2021 （确保你登录了微博）
 // 2. 打开调试窗口，在 console 中贴下面的代码后回车
 
-let my_props = {}, homes_to_visit = [], stop = false;
+let my_props = {}, homes_to_visit = [];
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -138,10 +138,6 @@ function get_props(location) {
 }
 
 function get_home(user) {
-    if (stop) {
-        return;
-    }
-
     let url = "https://huodong.weibo.cn/hongbao2021/aj_bullhome?bullid=" + user.bull_id + "&debug=false&uid=" + user.id;
     post(url).then(data => {
         go_touch(user, data);
@@ -172,11 +168,7 @@ function go_touch(user, data) {
             console.log("摸到 %s 的 %s", user_name, data.layer.propGotLayer.desc);
             mblog_after(data.layer.propGotLayer.aj_pdata, user);
         } else if(data.touchTips && data.touchTips.length > 0) {
-            console.log("摸过 %s 了", user_name);
-            if (data.touchTips[0].text.indexOf("摸一摸道具数已达上限") > 0) {
-                stop_all();
-                console.log("今天不能再摸了");
-            }
+            console.log("摸过 %s 了, %s", user_name, data.touchTips[0].text);
         } else {
             console.log("白摸 %s 了", user_name);
         }
@@ -232,10 +224,6 @@ function mblog_after(sign, user) {
     });
 }
 
-function stop_all() {
-    stop = true;
-}
-
 async function start() {
     var page = 1, type = 0;
     while (true) {
@@ -283,6 +271,7 @@ if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1)
 
     start().then((homes) => {
         homes.sort(() => Math.random() - 0.5);
+        homes = homes.slice(0, 20);
         homes.forEach((home, i) => {
             setTimeout(() => {
                 get_home(home)
