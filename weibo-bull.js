@@ -141,7 +141,6 @@ function get_home(user) {
     let url = "https://huodong.weibo.cn/hongbao2021/aj_bullhome?bullid=" + user.bull_id + "&debug=false&uid=" + user.id;
     post(url).then(data => {
         go_touch(user, data);
-        go_touch(user, data);
     });
 }
 
@@ -260,6 +259,14 @@ async function start() {
     return homes_to_visit;
 }
 
+console.log(`
+  ____              _ _     _                       _ _
+ |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
+ | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
+ | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.5
+`);
+
 if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1) {
     if (confirm("请访问福牛首页后再次粘贴脚本")) {
         window.location = "https://huodong.weibo.cn/hongbao2021";
@@ -272,7 +279,7 @@ if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1)
 
     start().then((homes) => {
         homes.sort(() => Math.random() - 0.5);
-        homes = homes.slice(0, 50);
+        homes = homes.slice(0, 100);
         homes.forEach((home, i) => {
             setTimeout(() => {
                 get_home(home)
@@ -280,5 +287,5 @@ if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1)
         });
     });
 
-    // go_travel(1);
+    //go_travel(1);
 }
