@@ -10,7 +10,7 @@ function sleep(ms) {
 function post_sync(url, data, callback) {
     let http = new XMLHttpRequest();
     http.open('POST', url, false);
-    http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=utf-8');
     http.send(data);
     if (http.status !== 200) {
         return undefined;
@@ -32,7 +32,7 @@ async function post(url, data) {
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
         },
         body: data
     });
@@ -141,6 +141,7 @@ function get_home(user) {
     let url = "https://huodong.weibo.cn/hongbao2021/aj_bullhome?bullid=" + user.bull_id + "&debug=false&uid=" + user.id;
     post(url).then(data => {
         go_touch(user, data);
+        go_touch(user, data);
     });
 }
 
@@ -157,9 +158,9 @@ function go_touch(user, data) {
         return;
     }
 
-    let url = "https://huodong.weibo.cn/hongbao2021/aj_touch";
+    let url = "https://huodong.weibo.cn/hongbao2021/aj_touch?current_uid=1763952531";
     let query = new URLSearchParams();
-    query.append('touchnum', 50);
+    query.append('touchnum', 8);
     query.append('touchbullid', user.bull_id);
     query.append('touchuid', user.id);
     query.append('pagetoken', data.pagetoken);
@@ -271,7 +272,7 @@ if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1)
 
     start().then((homes) => {
         homes.sort(() => Math.random() - 0.5);
-        homes = homes.slice(0, 20);
+        homes = homes.slice(0, 50);
         homes.forEach((home, i) => {
             setTimeout(() => {
                 get_home(home)
@@ -279,5 +280,5 @@ if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1)
         });
     });
 
-    go_travel(1);
+    // go_travel(1);
 }
