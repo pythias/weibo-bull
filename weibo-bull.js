@@ -1,7 +1,7 @@
 // 1. 使用 chrome 打开 https://huodong.weibo.cn/hongbao2021 （确保你登录了微博）
 // 2. 打开调试窗口，在 console 中贴下面的代码后回车
 
-let my_props = {}, homes_to_visit = [];
+let my_props = {}, stopped = false, rank_homes = [], map_homes = [];
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -78,7 +78,7 @@ function get_ranks(type, page) {
     return post_sync(url, '', (data) => {
         console.log('get_ranks, type:%d, page:%d, count:%d, has_next:%s', type, page, data.rank.length, data.hasnext);
         data.rank.forEach((rank, i) => {
-            homes_to_visit.push(user_from_rank(rank));
+            rank_homes.push(user_from_rank(rank));
         });
 
         return data.hasnext && page < 5;
@@ -91,7 +91,7 @@ function get_plaza(page) {
         console.log('get_plaza, page:%d, count:%d, has_next:%s', page, data.list.length, data.hasnext);
         data.list.forEach((user_prop, i) => {
             if (my_props[user_prop.propId] === undefined) {
-                homes_to_visit.push(user_from_plaza(user_prop));
+                rank_homes.push(user_from_plaza(user_prop));
             }
         });
 
@@ -101,7 +101,7 @@ function get_plaza(page) {
 
 function get_map(type) {
     let url = 'https://huodong.weibo.cn/hongbao2021/aj_travelmap?type=' + type;
-    return post_sync(url, '', (data) => {
+    post(url, '').then((data) => {
         let length = 0;
         if (data.bottomData !== undefined) {
             length = data.bottomData.length;
@@ -110,12 +110,11 @@ function get_map(type) {
                     return;
                 }
 
-                homes_to_visit.push(user_from_map(user));
+                map_homes.push(user_from_map(user));
             });
         }
 
         console.log('get_map, type:%d, count:%d', type, length);
-        return type < 3;
     });
 }
 
@@ -130,38 +129,34 @@ function get_props(location) {
         data.props.forEach(prop => {
             my_props[prop.propid] = prop.title;
         });
-
-        if (location < 8) {
-            get_props(location + 1);
-        }
     });
 }
 
-function get_home(user) {
+function go_home(user) {
     let url = "https://huodong.weibo.cn/hongbao2021/aj_bullhome?bullid=" + user.bull_id + "&debug=false&uid=" + user.id;
-    post(url).then(data => {
-        go_touch(user, data);
+    post(url).then(home_data => {
+        go_touch(user, home_data);
     });
 }
 
-function go_touch(user, data) {
+function go_touch(user, home_data) {
     let user_name = ""
     if (user.name) {
         user_name = user.name;
     } else {
-        user_name = data.currentUid.id;
+        user_name = home_data.currentUid.id;
     }
 
-    if (data.canTouchMore === 0) {
-        console.log("%s 的牛 %s 不在", user_name, data.userBull.bull_name);
+    if (home_data.canTouchMore === 0) {
+        console.log("%s 的牛 %s 不在", user_name, home_data.userBull.bull_name);
         return;
     }
 
-    if (data.userBull.curPropids !== undefined && data.userBull.curPropids.length > 0) {
+    if (home_data.userBull.curPropids !== undefined && home_data.userBull.curPropids.length > 0) {
         const missing = (pid) => my_props[pid] === undefined;
-        const f = data.userBull.curPropids.findIndex(missing);
+        const f = home_data.userBull.curPropids.findIndex(missing);
         if (f === -1) {
-            console.log("%s 的福牛道具都有了, 道具：%s", user_name, data.userBull.curPropids.join());
+            console.log("%s 的福牛道具都有了, 道具：%s", user_name, home_data.userBull.curPropids.join());
             return;
         }
     } else {
@@ -169,25 +164,34 @@ function go_touch(user, data) {
         return;
     }
 
-    let url = "https://huodong.weibo.cn/hongbao2021/aj_touch?current_uid=1763952531";
+    let url = "https://huodong.weibo.cn/hongbao2021/aj_touch";
     let query = new URLSearchParams();
     query.append('touchnum', 8);
     query.append('touchbullid', user.bull_id);
     query.append('touchuid', user.id);
-    query.append('pagetoken', data.pagetoken);
-    post(url, query.toString()).then(data => {
-        if (data.layer) {
-            console.log("摸到 %s 的 %s", user_name, data.layer.propGotLayer.desc);
-            mblog_after(data.layer.propGotLayer.aj_pdata, user);
-        } else if(data.touchTips && data.touchTips.length > 0) {
-            console.log("摸过 %s 了, %s", user_name, data.touchTips[0].text);
+    query.append('pagetoken', home_data.pagetoken);
+    post(url, query.toString()).then((touch_data) => {
+        if (touch_data.layer) {
+            console.log("摸到 %s 的 %s", user_name, touch_data.layer.propGotLayer.desc);
+            mblog_after(touch_data.layer.propGotLayer.aj_pdata, user);
+        } else if(touch_data.touchTips && touch_data.touchTips.length > 0) {
+            if (touch_data.touchTips[0].text.indexOf("摸一摸道具数已达上限") > 0) {
+                stopped = true;
+            }
+            console.log("摸过 %s 了, %s", user_name, touch_data.touchTips[0].text);
         } else {
             console.log("白摸 %s 了", user_name);
         }
+
+        // if (touch_data.canTouchMore) {
+        //     setTimeout(() => {
+        //         go_touch(user, home_data);
+        //     }, 300);
+        // }
     });
 }
 
-function go_sign() {
+async function go_sign() {
     let url = 'https://huodong.weibo.cn/hongbao2021/aj_sign';
 
     let json = post_sync(url);
@@ -198,11 +202,12 @@ function go_sign() {
         case 20004:
             console.log("已经签过");
             break;
-    
         default:
             console.error(json);
             break;
     }
+
+    return true;
 }
 
 function go_travel(scene) {
@@ -216,12 +221,6 @@ function go_travel(scene) {
                 console.log('在 %s 寻到 %s', scene_name, data.name);
             });
         }
-
-        if (scene < 17) {
-            setTimeout(() => {
-                go_travel(scene + 1);
-            }, 2000 * scene);
-        }
     });
 }
 
@@ -231,13 +230,13 @@ function mblog_after(sign, user) {
     query.append('sign', sign);
     query.append('mblog', 1);
     query.append('follow', 1);
-    post(url, query.toString()).then(data => {
+    post(url, query.toString()).then((data) => {
         console.log("发微博感谢了 %s", user.name);
     });
 }
 
-async function start() {
-    var page = 1, type = 0;
+async function start_rank() {
+    var page = 1;
     while (true) {
         await sleep(1000);
         if (!get_ranks(0, page++)) {
@@ -261,14 +260,37 @@ async function start() {
         }
     }
 
-    while (true) {
+    rank_homes.sort(() => Math.random() - 0.5);
+    homes = rank_homes.slice(0, 100);
+    for (var i = 0; i < 100 && i < homes.length && stopped != false; i++) {
         await sleep(1000);
-        if (!get_map(type++)) {
-            break;
-        }
+        go_home(homes[i], false);
     }
 
-    return homes_to_visit;
+    return true;
+}
+
+async function start_map() {
+    for (var i = 0; i < 4; i++) {
+        await sleep(1000);
+        get_map(i);
+    }
+
+    for (var i = 0; i < map_homes.length; i++) {
+        await sleep(1000);
+        go_home(map_homes[i], true);
+    }
+
+    return true;
+}
+
+async function start_scenes() {
+    for (var i = 1; i < 18; i++) {
+        await sleep(1000);
+        go_travel(i);
+    }
+
+    return true;
 }
 
 console.log(`
@@ -276,28 +298,22 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.6
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.7
 `);
 
-if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1) {
-    if (confirm("请访问福牛首页后再次粘贴脚本")) {
-        window.location = "https://huodong.weibo.cn/hongbao2021";
+go_sign()
+.then((result) => {
+    for (var i = 1; i < 9; i++) {
+        get_props(i);
     }
-} else {
-    go_sign();
-
-    get_props(1);
     console.log("已有道具 %d 个", Object.keys(my_props).length);
-
-    start().then((homes) => {
-        homes.sort(() => Math.random() - 0.5);
-        homes = homes.slice(0, 100);
-        homes.forEach((home, i) => {
-            setTimeout(() => {
-                get_home(home)
-            }, 1000 * i);
-        });
-    });
-
-    go_travel(1);
-}
+})
+.then(() => {
+    return start_rank();
+})
+.then(() => {
+    return start_map();
+})
+.then(() => {
+    return start_scenes();
+});
