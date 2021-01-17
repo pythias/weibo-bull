@@ -157,6 +157,18 @@ function go_touch(user, data) {
         return;
     }
 
+    if (data.userBull.curPropids !== undefined && data.userBull.curPropids.length > 0) {
+        const missing = (pid) => my_props[pid] === undefined;
+        const f = data.userBull.curPropids.findIndex(missing);
+        if (f === -1) {
+            console.log("%s 的福牛道具都有了, 道具：%s", user_name, data.userBull.curPropids.join());
+            return;
+        }
+    } else {
+        console.log("%s 的福牛没有道具可以摸", user_name);
+        return;
+    }
+
     let url = "https://huodong.weibo.cn/hongbao2021/aj_touch?current_uid=1763952531";
     let query = new URLSearchParams();
     query.append('touchnum', 8);
@@ -264,7 +276,7 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.5
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.6
 `);
 
 if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1) {
@@ -287,5 +299,5 @@ if (window.location.href.indexOf("https://huodong.weibo.cn/hongbao2021") === -1)
         });
     });
 
-    //go_travel(1);
+    go_travel(1);
 }
