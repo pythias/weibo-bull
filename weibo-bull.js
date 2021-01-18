@@ -41,7 +41,6 @@ async function post(url, data) {
             return json.data;
         }
 
-        console.log(json);
         return {};
     });
 }
