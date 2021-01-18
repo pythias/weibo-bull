@@ -214,11 +214,18 @@ function go_travel(scene) {
     let url = 'https://huodong.weibo.cn/hongbao2021/aj_scene?sceneid=' + scene;
     post_sync(url, '', (data) => {
         scene_name = data.name;
-        if (data.props === undefined) {
+        if (scene_name === undefined) {
+            console.log('没有此地图 %s', scene);
+        } else if (data.props === undefined) {
             console.log('在 %s 没寻到宝', scene_name);
         } else {
+            prop_title = data.props.title;
             post('https://huodong.weibo.cn' + data.props.btn.link).then(data => {
-                console.log('在 %s 寻到 %s', scene_name, data.name);
+                if (data) {
+                    console.log('在 %s 寻到 %s', scene_name, prop_title);
+                } else {
+                    console.log('在 %s 已经获得过 %s', scene_name, prop_title);
+                }
             });
         }
     });
