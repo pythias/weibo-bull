@@ -81,7 +81,7 @@ function get_ranks(type, page) {
             rank_homes.push(user_from_rank(rank));
         });
 
-        return data.hasnext && page < 5;
+        return data.hasnext;
     });
 }
 
@@ -95,7 +95,7 @@ function get_plaza(page) {
             }
         });
 
-        return data.hasnext && page < 5;
+        return data.hasnext;
     });
 }
 
@@ -235,33 +235,44 @@ function mblog_after(sign, user) {
     });
 }
 
+function random_pages(size, max) {
+    var pages = [];
+    for (let index = 1; index <= max; index++) {
+        pages.push(index);
+    }
+
+    return pages.sort(() => Math.random() - 0.5).slice(0, size);
+}
+
 async function start_rank() {
-    var page = 1;
-    while (true) {
+    var pages = random_pages(10, 200);
+    for (const i in pages) {
+        const page = pages[i];
         await sleep(1000);
-        if (!get_ranks(0, page++)) {
+        if (!get_ranks(0, page)) {
             break;
         }
     }
 
-    page = 1;
-    while (true) {
+    pages = random_pages(5, 10);
+    for (const i in pages) {
+        const page = pages[i];
         await sleep(1000);
-        if (!get_ranks(1, page++)) {
+        if (!get_ranks(1, page)) {
             break;
         }
     }
 
-    page = 1;
-    while (true) {
+    pages = random_pages(10, 20);
+    for (const i in pages) {
+        const page = pages[i];
         await sleep(1000);
-        if (!get_plaza(page++)) {
+        if (!get_plaza(page)) {
             break;
         }
     }
 
-    rank_homes.sort(() => Math.random() - 0.5);
-    homes = rank_homes.slice(0, 100);
+    homes = rank_homes.sort(() => Math.random() - 0.5).slice(0, 100);
     for (var i = 0; i < 100 && i < homes.length && stopped != false; i++) {
         await sleep(1000);
         go_home(homes[i], false);
@@ -298,7 +309,7 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.7
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.8
 `);
 
 go_sign()
