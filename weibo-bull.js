@@ -73,25 +73,25 @@ function user_from_map(map) {
     };
 }
 
-function get_ranks(type, page) {
+function get_ranks(type, page, homes) {
     let url = 'https://huodong.weibo.cn/hongbao2021/aj_getrank?t=' + type + '&page=' + page;
     return post_sync(url, '', (data) => {
         console.log('get_ranks, type:%d, page:%d, count:%d, has_next:%s', type, page, data.rank.length, data.hasnext);
         data.rank.forEach((rank, i) => {
-            rank_homes.push(user_from_rank(rank));
+            homes.push(user_from_rank(rank));
         });
 
         return data.hasnext;
     });
 }
 
-function get_plaza(page) {
+function get_plaza(page, homes) {
     let url = 'https://huodong.weibo.cn/hongbao2021/aj_propnews?page=' + page;
     return post_sync(url, '', (data) => {
         console.log('get_plaza, page:%d, count:%d, has_next:%s', page, data.list.length, data.hasnext);
         data.list.forEach((user_prop, i) => {
             if (my_props[user_prop.propId] === undefined) {
-                rank_homes.push(user_from_plaza(user_prop));
+                homes.push(user_from_plaza(user_prop));
             }
         });
 
@@ -99,7 +99,7 @@ function get_plaza(page) {
     });
 }
 
-function get_map(type) {
+function get_map(type, homes) {
     let url = 'https://huodong.weibo.cn/hongbao2021/aj_travelmap?type=' + type;
     post(url, '').then((data) => {
         let length = 0;
@@ -110,7 +110,7 @@ function get_map(type) {
                     return;
                 }
 
-                map_homes.push(user_from_map(user));
+                homes.push(user_from_map(user));
             });
         }
 
@@ -244,55 +244,67 @@ function random_pages(size, max) {
     return pages.sort(() => Math.random() - 0.5).slice(0, size);
 }
 
-async function start_rank() {
-    var pages = random_pages(10, 200);
-    for (const i in pages) {
-        const page = pages[i];
+async function go_homes(homes) {
+    stopped = false;
+    homes = homes.sort(() => Math.random() - 0.5).slice(0, 100);
+    for (var i = 0; i < homes.length && stopped != true; i++) {
         await sleep(1000);
-        if (!get_ranks(0, page)) {
-            break;
-        }
-    }
-
-    pages = random_pages(5, 10);
-    for (const i in pages) {
-        const page = pages[i];
-        await sleep(1000);
-        if (!get_ranks(1, page)) {
-            break;
-        }
-    }
-
-    pages = random_pages(10, 20);
-    for (const i in pages) {
-        const page = pages[i];
-        await sleep(1000);
-        if (!get_plaza(page)) {
-            break;
-        }
-    }
-
-    homes = rank_homes.sort(() => Math.random() - 0.5).slice(0, 100);
-    for (var i = 0; i < 100 && i < homes.length && stopped != false; i++) {
-        await sleep(1000);
-        go_home(homes[i], false);
+        go_home(homes[i]);
     }
 
     return true;
 }
 
+async function start_rank() {
+    var homes = [];
+    var pages = random_pages(10, 200);
+    for (const i in pages) {
+        const page = pages[i];
+        await sleep(1000);
+        if (!get_ranks(0, page, homes)) {
+            break;
+        }
+    }
+
+    return homes;
+}
+
+async function start_friends() {
+    var homes = [];
+    var pages = random_pages(5, 10);
+    for (const i in pages) {
+        const page = pages[i];
+        await sleep(1000);
+        if (!get_ranks(1, page, homes)) {
+            break;
+        }
+    }
+
+    return homes;
+}
+
+async function start_plaza() {
+    var homes = [];
+    var pages = random_pages(10, 20);
+    for (const i in pages) {
+        const page = pages[i];
+        await sleep(1000);
+        if (!get_plaza(page, homes)) {
+            break;
+        }
+    }
+
+    return homes;
+}
+
 async function start_map() {
+    var homes = [];
     for (var i = 0; i < 4; i++) {
         await sleep(1000);
-        get_map(i);
+        get_map(i, homes);
     }
-
-    for (var i = 0; i < map_homes.length; i++) {
-        await sleep(1000);
-        go_home(map_homes[i], true);
-    }
-
-    return true;
+    
+    return homes;
 }
 
 async function start_scenes() {
@@ -309,22 +321,28 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.8
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.9
 `);
 
 go_sign()
-.then((result) => {
-    for (var i = 1; i < 9; i++) {
-        get_props(i);
-    }
-    console.log("已有道具 %d 个", Object.keys(my_props).length);
-})
-.then(() => {
-    return start_rank();
-})
-.then(() => {
-    return start_map();
-})
-.then(() => {
-    return start_scenes();
-});
+    .then(() => {
+        for (var i = 1; i < 9; i++) {
+            get_props(i);
+        }
+        console.log("已有道具 %d 个", Object.keys(my_props).length);
+    })
+    .then(async () => {
+        const homes = await start_rank();
+        return go_homes(homes);
+    })
+    .then(async () => {
+        const homes = await start_friends();
+        return go_homes(homes);
+    })
+    .then(async () => {
+        const homes = await start_map();
+        return go_homes(homes);
+    })
+    .then(() => {
+        return start_scenes();
+    });
