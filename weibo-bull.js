@@ -209,9 +209,64 @@ async function go_sign() {
     return true;
 }
 
-function go_travel(scene) {
-    let url = 'https://huodong.weibo.cn/hongbao2021/aj_scene?sceneid=' + scene;
-    post_sync(url, '', (data) => {
+function go_task(if_route, if_url, callback) {
+    let url = 'https://huodong.weibo.cn/hongbao2021/aj_taskinfo';
+    return post_sync(url, '', (data) => {
+        if (data.length == 0) {
+            return;
+        }
+
+        for (let index = 0; index < data.length; index++) {
+            const task = data[index];
+            const task_info = task.to_url.split("?");
+            const task_route = task_info[0];
+            const task_url = task_info[1];
+            
+            if (if_route !== task_route && if_url !== task_url) {
+                continue;
+            }
+
+            if (task.left_nums == 0) {
+                console.log("已经完成%d个'%s'", task.have_nums, task.task_name);
+                return true;
+            }
+
+            callback(task_route, task_url);
+        }
+    });
+}
+
+function task_fashion(route, url) {
+    const page = (Math.random() * 20).toFixed(0);
+    const fashion_url = 'https://api.weibo.cn/2/cardlist?wm=3333_2001&launchid=10000365--x&b=0&from=10B1193010&c=iphone&networktype=wifi&v_p=87&skin=default&v_f=1&s=64444444&lang=zh_CN&sflag=1&ua=iPhone10,3__weibo__11.1.1__iphone__os14.2&ft=11&fid=232318&moduleID=pagecard&containerid=232318&count=20&page=' + page;
+    go_fashion(fashion_url);
+}
+
+function go_fashion(fashion_url) {
+    post_sync(fashion_url, '', (data) => {
+        for (let index = 0; index < data.cards.length; index++) {
+            const card = data.cards[index];
+            if (card.card_type !== 22) {
+                continue;
+            }
+
+            const scheme = card.scheme;
+            const scheme_query = scheme.split("?")[1];
+            const home_url = 'https://huodong.weibo.cn/hongbao2021/aj_bullhome?' + scheme_query;
+            post(home_url, '').then((data) => {
+                console.log("找到一个福牛图标");
+            });
+        }
+    });
+}
+
+function task_scene(route, url) {
+    const scene_url = 'https://huodong.weibo.cn/hongbao2021/aj_scene?' + url;
+    go_scene(scene_url);
+}
+
+function go_scene(scene_url) {
+    post(scene_url, '').then((data) => {
         scene_name = data.name;
         if (scene_name === undefined) {
             console.log('没有此地图 %s', scene);
@@ -263,7 +318,7 @@ async function go_homes(homes) {
 
 async function start_rank() {
     var homes = [];
-    var pages = random_pages(10, 200);
+    var pages = random_pages(10, 400);
     for (const i in pages) {
         const page = pages[i];
         await sleep(1000);
@@ -314,9 +369,30 @@ async function start_map() {
 }
 
 async function start_scenes() {
-    for (var i = 1; i < 18; i++) {
+    for (var i = 0; i < 20; i++) {
         await sleep(1000);
-        go_travel(i);
+        const result = go_task('pages/place/place', '', (task) => {
+            task_scene(task);
+        });
+
+        if (result) {
+            break;
+        }
+    }
+
+    return true;
+}
+
+async function start_fashion() {
+    for (var i = 0; i < 20; i++) {
+        await sleep(1000);
+        const result = go_task('', 'containerid=232318', (task) => {
+            task_fashion(task);
+        });
+
+        if (result) {
+            break;
+        }
     }
 
     return true;
@@ -327,7 +403,7 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.9
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.10
 `);
 
 go_sign()
@@ -352,3 +428,5 @@ go_sign()
     .then(() => {
         return start_scenes();
     });
+
+// start_fashion();
