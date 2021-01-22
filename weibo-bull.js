@@ -151,7 +151,7 @@ function go_touch(user, home_data) {
         return;
     }
 
-    if (home_data.userBull.curPropids !== undefined && home_data.userBull.curPropids.length > 0) {
+    if (home_data.userBull !== undefined && home_data.userBull.curPropids !== undefined && home_data.userBull.curPropids.length > 0) {
         const missing = (pid) => my_props[pid] === undefined;
         const f = home_data.userBull.curPropids.findIndex(missing);
         if (f === -1) {
@@ -181,12 +181,6 @@ function go_touch(user, home_data) {
         } else {
             console.log("白摸 %s 了", user_name);
         }
-
-        // if (touch_data.canTouchMore) {
-        //     setTimeout(() => {
-        //         go_touch(user, home_data);
-        //     }, 300);
-        // }
     });
 }
 
@@ -403,7 +397,7 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.10
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.11
 `);
 
 go_sign()
