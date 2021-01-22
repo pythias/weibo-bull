@@ -365,11 +365,7 @@ async function start_map() {
 async function start_scenes() {
     for (var i = 0; i < 20; i++) {
         await sleep(1000);
-        const result = go_task('pages/place/place', '', (task) => {
-            task_scene(task);
-        });
-
-        if (result) {
+        if (go_task('pages/place/place', '', task_scene)) {
             break;
         }
     }
@@ -380,9 +376,7 @@ async function start_scenes() {
 async function start_fashion() {
     for (var i = 0; i < 20; i++) {
         await sleep(1000);
-        const result = go_task('', 'containerid=232318', (task) => {
-            task_fashion(task);
-        });
+        const result = go_task('', 'containerid=232318', task_fashion);
 
         if (result) {
             break;
