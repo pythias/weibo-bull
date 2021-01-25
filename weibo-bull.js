@@ -1,7 +1,7 @@
 // 1. 使用 chrome 打开 https://huodong.weibo.cn/hongbao2021 （确保你登录了微博）
 // 2. 打开调试窗口，在 console 中贴下面的代码后回车
 
-let my_props = {}, stopped = false, rank_homes = [], map_homes = [];
+let my_props = {}, stopped = false;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -151,10 +151,11 @@ function go_touch(user, home_data) {
         return;
     }
 
+    let found_prop_id = undefined;
     if (home_data.userBull !== undefined && home_data.userBull.curPropids !== undefined && home_data.userBull.curPropids.length > 0) {
         const missing = (pid) => my_props[pid] === undefined;
         const found_index = home_data.userBull.curPropids.findIndex(missing);
-        const found_prop_id = home_data.userBull.curPropids[found_index];
+        found_prop_id = home_data.userBull.curPropids[found_index];
         if (found_index == -1 || found_index == undefined || found_prop_id == undefined) {
             console.log("%s 的福牛道具都有了, 道具：%s", user_name, home_data.userBull.curPropids.join());
             return;
@@ -176,17 +177,14 @@ function go_touch(user, home_data) {
             mblog_after(touch_data.layer.propGotLayer.aj_pdata, user);
             return false;
         } else if(touch_data.touchTips && touch_data.touchTips.length > 0) {
+            console.log("摸过 %s 了, %s, 想要 %s", user_name, touch_data.touchTips[0].text, found_prop_id);
             if (touch_data.touchTips[0].text.indexOf("摸一摸道具数已达上限") > 0) {
                 stopped = true;
-                console.log("摸过 %s 了, %s", user_name, touch_data.touchTips[0].text);
                 return false;
-            } else {
-                console.log("摸过 %s 了, %s", user_name, touch_data.touchTips[0].text);
-                return touch_data.canTouchMore;
             }
-        } else {
-            return touch_data.canTouchMore;
         }
+        
+        return touch_data.canTouchMore;
     }).then((next) => {
         
     });
