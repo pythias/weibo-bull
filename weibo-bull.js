@@ -153,13 +153,14 @@ function go_touch(user, home_data) {
 
     if (home_data.userBull !== undefined && home_data.userBull.curPropids !== undefined && home_data.userBull.curPropids.length > 0) {
         const missing = (pid) => my_props[pid] === undefined;
-        const f = home_data.userBull.curPropids.findIndex(missing);
-        if (f === -1) {
+        const found_index = home_data.userBull.curPropids.findIndex(missing);
+        const found_prop_id = home_data.userBull.curPropids[found_index];
+        if (found_index == -1 || found_index == undefined || found_prop_id == undefined) {
             console.log("%s 的福牛道具都有了, 道具：%s", user_name, home_data.userBull.curPropids.join());
             return;
         }
     } else {
-        console.log("%s 的福牛没有道具可以摸", user_name);
+        console.log("%s 的福牛没有道具", user_name);
         return;
     }
 
@@ -173,14 +174,21 @@ function go_touch(user, home_data) {
         if (touch_data.layer) {
             console.log("摸到 %s 的 %s", user_name, touch_data.layer.propGotLayer.desc);
             mblog_after(touch_data.layer.propGotLayer.aj_pdata, user);
+            return false;
         } else if(touch_data.touchTips && touch_data.touchTips.length > 0) {
             if (touch_data.touchTips[0].text.indexOf("摸一摸道具数已达上限") > 0) {
                 stopped = true;
+                console.log("摸过 %s 了, %s", user_name, touch_data.touchTips[0].text);
+                return false;
+            } else {
+                console.log("摸过 %s 了, %s", user_name, touch_data.touchTips[0].text);
+                return touch_data.canTouchMore;
             }
-            console.log("摸过 %s 了, %s", user_name, touch_data.touchTips[0].text);
         } else {
-            console.log("白摸 %s 了", user_name);
+            return touch_data.canTouchMore;
         }
+    }).then((next) => {
+        
     });
 }
 
@@ -391,7 +399,7 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.11
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.12
 `);
 
 go_sign()
@@ -399,6 +407,7 @@ go_sign()
         for (var i = 1; i < 9; i++) {
             get_props(i);
         }
+        console.table(my_props);
         console.log("已有道具 %d 个", Object.keys(my_props).length);
     })
     .then(async () => {
