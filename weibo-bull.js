@@ -146,8 +146,8 @@ function go_touch(user, home_data) {
         user_name = home_data.currentUid.id;
     }
 
-    if (home_data.canTouchMore === 0) {
-        console.log("%s 的牛 %s 不在", user_name, home_data.userBull.bull_name);
+    if (home_data.canTouchMore === 0 || home_data.canTouchMoreScore === 0) {
+        console.log("%s 的牛不能再摸了", user_name);
         return;
     }
 
@@ -184,9 +184,7 @@ function go_touch(user, home_data) {
             }
         }
         
-        return touch_data.canTouchMore;
-    }).then((next) => {
-        
+        return touch_data.canTouchMoreScore;
     });
 }
 
@@ -307,7 +305,7 @@ function random_pages(size, max) {
 
 async function go_homes(homes) {
     stopped = false;
-    homes = homes.sort(() => Math.random() - 0.5).slice(0, 100);
+    homes = homes.sort(() => Math.random() - 0.5).slice(0, 500);
     for (var i = 0; i < homes.length && stopped != true; i++) {
         await sleep(1000);
         go_home(homes[i]);
@@ -332,9 +330,7 @@ async function start_rank() {
 
 async function start_friends() {
     var homes = [];
-    var pages = random_pages(5, 10);
-    for (const i in pages) {
-        const page = pages[i];
+    for (let page = 1; page <= 100; page++) {
         await sleep(1000);
         if (!get_ranks(1, page, homes)) {
             break;
@@ -397,7 +393,7 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.12
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.13
 `);
 
 go_sign()
