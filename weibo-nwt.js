@@ -186,33 +186,6 @@ async function go_sign() {
     return true;
 }
 
-function go_task(if_route, if_url, callback) {
-    let url = 'https://huodong.weibo.cn/hongbao2021/aj_taskinfo';
-    return post_sync(url, '', (data) => {
-        if (data.length == 0) {
-            return;
-        }
-
-        for (let index = 0; index < data.length; index++) {
-            const task = data[index];
-            const task_info = task.to_url.split("?");
-            const task_route = task_info[0];
-            const task_url = task_info[1];
-
-            if (if_route !== task_route && if_url !== task_url) {
-                continue;
-            }
-
-            if (task.left_nums == 0) {
-                console.log("已经完成%d个'%s'", task.have_nums, task.task_name);
-                return true;
-            }
-
-            callback(task_route, task_url);
-        }
-    });
-}
-
 async function go_homes(users) {
     stopped = false;
     for (var i = 0; i < users.length && stopped != true; i++) {
@@ -226,22 +199,35 @@ async function go_homes(users) {
     return true;
 }
 
-function get_blogs() {
-    const page = (Math.random() * 5).toFixed(0);
-    let url = NWT_URL + 'aj_mbloglist?prop_id=0&type=2&v_p=89&from=10C1193010&page=' + page;
-    return post_sync(url, '', (data) => {
-        return data.list;
-    });
+function get_blogs(type) {
+    let page = 0;
+    let lists = [];
+    while (true) {
+        let url = NWT_URL + 'aj_mbloglist?prop_id=0&type=' + type + '&v_p=89&from=10C1193010&page=' + page;
+        let data = post_sync(url, '', (data) => {
+            return data;
+        });
+        lists = lists.concat(data.list);
+        page++;
+
+        if (data.hasnext == 0) {
+            break;
+        }
+    }
+    
+    return lists;
 }
 
 async function go_blogs(blogs) {
     stopped = false;
     for (var i = 0; i < blogs.length && stopped != true; i++) {
         await sleep(1000);
-        go_blog(blogs[i]);
+        if (go_blog(blogs[i]) == false) {
+            break;
+        }
     }
 
-    console.log("今日转发已完成");
+    console.log("转发已完成");
     return true;
 }
 
@@ -262,9 +248,9 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.14
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.15
 
-为了测试红包飞，也是醉醉的，每年写个脚本
+为了测试红包飞，也是醉醉的
  `);
 
 my_home().then(() => {
@@ -280,9 +266,12 @@ my_home().then(() => {
     const users = await get_touch_users();
     return go_homes(users);
 }).then(async () => {
-    console.log("开始转发");
-    const blogs = await get_blogs();
-    console.log("%d个微博待转发", blogs.length);
+    const blogs = await get_blogs(1);
+    console.log("普通微博%d个待转发", blogs.length);
+    return go_blogs(blogs);
+}).then(async () => {
+    const blogs = await get_blogs(2);
+    console.log("限定微博%d个待转发", blogs.length);
     return go_blogs(blogs);
 }).then(async () => {
     go_build_small();
