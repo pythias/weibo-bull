@@ -217,13 +217,17 @@ function get_blogs(type) {
 
 async function go_blogs(blogs) {
     let count = 0;
+    let fail = 0;
     for (var i = 0; i < blogs.length; i++) {
         await sleep(1000);
         if (go_blog(blogs[i])) {
             count++;
+            fail = 0;
+        } else {
+            fail++;
         }
 
-        if (count >= 10) {
+        if (count >= 10 || fail >= 2) {
             break;
         }
     }
@@ -249,7 +253,7 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.16
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.17
 
 为了测试红包飞，也是醉醉的
  `);
