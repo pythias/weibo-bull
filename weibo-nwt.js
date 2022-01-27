@@ -3,7 +3,7 @@
 
 const NWT_URL = 'https://huodong.weibo.cn/nwt2022/';
 
-let my_token = "", map_props = {}, my_props = {}, my_bag = { 'small': [], 'medium': [], 'large': [] }, stopped = false;
+let my_token = "", map_props = {}, my_props = {}, my_bag = { 'small': [], 'medium': [], 'large': [] };
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -92,7 +92,7 @@ async function get_props() {
 }
 
 async function go_build(props, prefix) {
-    for (var i = 0; i < props.length && stopped != true; i++) {
+    for (var i = 0; i < props.length; i++) {
         await sleep(1000);
         const prop = props[i];
         if (prop.num == 0) {
@@ -146,8 +146,6 @@ function go_home(user) {
 }
 
 function go_touch(user, home_data) {
-    console.log("开始摸 %s", home_data.desc.nick);
-
     let url = NWT_URL + "aj_tasktouch?netreqid=x&src=me&clientfrom=10C1193010&current_uid=" + home_data.desc.myuid;
     let query = new URLSearchParams();
     query.append('touch_uid', user);
@@ -187,8 +185,7 @@ async function go_sign() {
 }
 
 async function go_homes(users) {
-    stopped = false;
-    for (var i = 0; i < users.length && stopped != true; i++) {
+    for (var i = 0; i < users.length; i++) {
         await sleep(1000);
         if (go_home(users[i]) == false) {
             console.log("今日摸摸已完成");
@@ -219,10 +216,14 @@ function get_blogs(type) {
 }
 
 async function go_blogs(blogs) {
-    stopped = false;
-    for (var i = 0; i < blogs.length && stopped != true; i++) {
+    let count = 0;
+    for (var i = 0; i < blogs.length; i++) {
         await sleep(1000);
-        if (go_blog(blogs[i]) == false) {
+        if (go_blog(blogs[i])) {
+            count++;
+        }
+
+        if (count >= 10) {
             break;
         }
     }
@@ -236,7 +237,7 @@ function go_blog(blog) {
     const response = post_sync(url, blog.repostparam);
     if (response.code != 10000) {
         console.log("转发'%s'的微博，没有拿到道具", blog.user.name);
-        return true;
+        return false;
     }
 
     console.log("转发'%s'的微博，拿到'%s'", response.data.propInfo.screen_name, response.data.propInfo.prop_name);
@@ -248,7 +249,7 @@ console.log(`
  |  _ \\  ___  _ __ ( ) |_  | |__   ___    _____   _(_) |
  | | | |/ _ \\| '_ \\|/| __| | '_ \\ / _ \\  / _ \\ \\ / / | |
  | |_| | (_) | | | | | |_  | |_) |  __/ |  __/\\ V /| | |_
- |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.15
+ |____/ \\___/|_| |_|  \\__| |_.__/ \\___|  \\___| \\_/ |_|_(_) v0.16
 
 为了测试红包飞，也是醉醉的
  `);
